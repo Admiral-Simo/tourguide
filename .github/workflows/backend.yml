@@ -56,25 +56,31 @@ jobs:
 
             echo "Starting deployment on EC2..."
 
+            # 1. STOPPING: Check if the old code exists and use it to shut down gracefully
+            if [ -f "$APP_DIR/backend/docker-compose.yml" ]; then
+                echo "Found existing compose file. Stopping services..."
+                cd "$APP_DIR/backend"
+                # 'down' stops containers and removes networks
+                sudo docker-compose down || true
+                cd ~
+            else
+                echo "No existing compose file found. Attempting manual cleanup..."
+                sudo docker rm -f tourguide || true
+            fi
+
+            # 2. DELETING: Now it is safe to remove the directory
             echo "Removing old application directory..."
             rm -rf $APP_DIR
 
+            # 3. CLONING: Get the fresh code
             echo "Cloning repository..."
             git clone $REPO_URL $APP_DIR
 
+            # 4. BUILDING: Go to the new folder and start up
             echo "Entering application directory..."
-            cd $APP_DIR
+            cd $APP_DIR/backend
 
-            cd backend
-
-            echo "Checking for existing Docker container..."
-            if [ "$(sudo docker ps -a -q -f name=tourguide)" ]; then
-              echo "Existing container found. Stopping and removing it..."
-              sudo docker stop tourguide || true
-              sudo docker rm tourguide || true
-            fi
-
-            echo "Building and running new container with docker-compose..."
+            echo "Building and running new container..."
             sudo docker-compose up --build -d
 
             echo "Deployment complete!"
