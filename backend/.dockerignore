@@ -1,0 +1,12 @@
+# Git and IDE files
+.git
+.gitignore
+.idea/
+*.iml
+
+# Maven build files
+target/
+pom.xml.bak
+
+# Log files
+*.log
